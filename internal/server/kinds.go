@@ -354,5 +354,7 @@ func (s *Server) handleFromApp(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	t, _ = s.store.GetSheet(ctx, uid, t.ID)
+	t.Settings.FromApp = k.slug
+	_ = s.store.UpdateSheet(ctx, t)
 	writeJSON(w, http.StatusCreated, map[string]any{"table": t, "made": made})
 }

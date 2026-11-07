@@ -28,7 +28,7 @@ export default function TablePage() {
   const { toast } = useToast()
   const mobile = useIsMobile()
   const appState = useAppState()
-  const { bases } = useData()
+  const { bases, kinds } = useData()
   const [page, setPage] = useState<Page | null>(null)
   const [err, setErr] = useState('')
   const [rows, setRows] = useState<Row[] | null>(null)
@@ -176,6 +176,7 @@ export default function TablePage() {
   ]
   const notes = appState('notes', 'notes:write'), files = appState('files', 'files:write'), cal = appState('calendar', 'calendar:write'), forms = appState('forms', 'forms:read'), tasks = appState('tasks', 'tasks:read')
   const offHint = (s: ReturnType<typeof appState>) => (s.ok ? undefined : 'off')
+  const fromKind = page.table.settings.from_app ? kinds?.find(k => k.slug === page.table.settings.from_app) : undefined
   const more = (): MenuItem[] => [
     { label: 'About this table…', icon: 'info', onSelect: () => setTool('info') },
     { label: 'Bring rows from a spreadsheet…', icon: 'upload', onSelect: () => setTool('import') },
@@ -183,6 +184,9 @@ export default function TablePage() {
     { label: 'Ask AI about this table…', icon: 'sparkles', onSelect: () => setTool('ask') },
     'sep',
     { heading: 'With your other apps' },
+    ...(fromKind ? [{ label: `Bring in new ${fromKind.plural} from ${fromKind.app_name}`, icon: fromKind.icon, hint: fromKind.ok ? undefined : 'off', disabled: !fromKind.ok, onSelect: async () => {
+      try { const r = await api.post<{ made: number; seen: number }>(`${V1}/from-app`, { kind: fromKind.slug, table_id: tid }); toast(r.made ? `${r.made} new ${r.made === 1 ? 'row' : 'rows'} from ${fromKind.app_name}` : `Nothing new in ${fromKind.app_name}`); reloadAll(); announceChange() } catch (e) { toast(errMsg(e), 'err') }
+    } }] : []),
     { label: 'Keep the dates in Pocket Calendar…', icon: 'calendar', hint: page.table.settings.calendar?.on ? 'on' : offHint(cal), disabled: !cal.ok && !page.table.settings.calendar?.on, onSelect: () => setTool('calendar') },
     { label: 'Rows from a Pocket Forms form…', icon: 'list', hint: page.table.settings.form?.on ? 'on' : offHint(forms), disabled: !forms.ok && !page.table.settings.form?.on, onSelect: () => setTool('form') },
     { label: 'Tasks made from rows…', icon: 'check-square', hint: offHint(tasks), disabled: !tasks.ok, onSelect: () => setTool('tasks') },

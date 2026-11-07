@@ -192,7 +192,7 @@ function FromApps({ baseId, onDone }: { baseId?: number; onDone: Done }) {
   const list = kinds.filter(k => k.can_import)
   return (
     <div className="stack">
-      <p className="muted">A table with everything you have there, one row each, pointing back at it. Add your own fields — a rating, a note, a link to another table — and bring in the new ones later from the table’s ⋯ menu.</p>
+      <p className="muted">Makes a table with one row for each thing you have there, each linked back to it. Add your own fields — a rating, a note, a link to another table. Later, the table’s ⋯ menu brings in anything new.</p>
       <div className="ways">
         {list.map(k => (
           <button key={k.slug} type="button" className={`way ${k.ok ? '' : 'off'}`} disabled={!k.ok || !!busy} onClick={() => go(k.slug)} title={k.ok ? undefined : `${k.app_name}: ${k.fix || k.detail}`}>

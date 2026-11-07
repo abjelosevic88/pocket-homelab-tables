@@ -68,6 +68,7 @@ type SheetSettings struct {
 	Form     *FormSync     `json:"form,omitempty"`
 	TaskDone int64         `json:"task_done,omitempty"` // a checkbox ticked when a task made from the row is done
 	TaskDue  int64         `json:"task_due,omitempty"`  // the date field a new task takes its due day from
+	FromApp  string        `json:"from_app,omitempty"`  // made from a list in another app (a kind: contact, place…): new ones can be brought in
 }
 
 // Sheet is one table.

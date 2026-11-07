@@ -36,7 +36,7 @@ export interface Field { id: number; table_id: number; name: string; type: Field
 
 export interface CalendarSync { on: boolean; field: number; end_field?: number }
 export interface FormSync { on: boolean; form_id: string; title: string; url?: string; map: Record<string, number>; status?: string; at?: string; made?: number }
-export interface SheetSettings { calendar?: CalendarSync; form?: FormSync; task_done?: number; task_due?: number }
+export interface SheetSettings { calendar?: CalendarSync; form?: FormSync; task_done?: number; task_due?: number; from_app?: string }
 
 export interface Table { id: number; base_id: number; name: string; icon: string; description: string; position: number; settings: SheetSettings; created_at: string; updated_at: string; records: number }
 export interface Base { id: number; name: string; icon: string; color: string; description: string; position: number; template: string; created_at: string; updated_at: string; tables: Table[] }
