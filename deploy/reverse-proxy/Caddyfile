@@ -1,0 +1,4 @@
+# Pocket Tables behind Caddy.
+tables.example.com {
+	reverse_proxy pocket-tables:8080
+}
