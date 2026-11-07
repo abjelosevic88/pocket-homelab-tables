@@ -274,6 +274,9 @@ func (k pocketKind) rowFrom(sib *siblingConn, m map[string]any) map[string]any {
 			row[c.name] = v
 		}
 	}
+	if c := cleanCurrency(str(m, "currency")); c != "" {
+		row["Currency"] = c // used when the table has a Currency column
+	}
 	ref := k.ref(sib, m)
 	row["In "+k.app.name] = []any{map[string]any{"app": ref.App, "ref": ref.Ref, "title": ref.Title, "sub": ref.Sub, "url": ref.URL}}
 	return row
@@ -325,8 +328,30 @@ func (s *Server) handleFromApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	spec := specTable{Name: strings.ToUpper(k.plural[:1]) + k.plural[1:], Icon: "", Description: "Made from " + k.app.name + " on " + today() + "."}
+	// money in the currency the things are in: one currency → a money field in it;
+	// several → a number with a Currency column beside it
+	curs := map[string]bool{}
+	for _, m := range list {
+		if c := cleanCurrency(str(m, "currency")); c != "" {
+			curs[c] = true
+		}
+	}
+	mixed := len(curs) > 1
 	for _, c := range k.cols {
-		spec.Fields = append(spec.Fields, specField{Name: c.name, Type: c.typ})
+		f := specField{Name: c.name, Type: c.typ}
+		if c.typ == tables.Currency {
+			if mixed {
+				f.Type, f.Options = tables.Number, tables.Options{Decimals: 2}
+			} else {
+				for cur := range curs {
+					f.Options = tables.Options{Currency: cur, Decimals: 2}
+				}
+			}
+		}
+		spec.Fields = append(spec.Fields, f)
+	}
+	if mixed {
+		spec.Fields = append(spec.Fields, specField{Name: "Currency", Type: tables.Select})
 	}
 	spec.Fields = append(spec.Fields, specField{Name: "In " + k.app.name, Type: tables.Pocket, App: k.slug, Options: tables.Options{Single: true}})
 	base := specBase{Name: k.app.name, Icon: "📥", Tables: []specTable{spec}}
