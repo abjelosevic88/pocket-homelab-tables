@@ -176,7 +176,9 @@ export default function TablePage() {
   ]
   const notes = appState('notes', 'notes:write'), files = appState('files', 'files:write'), cal = appState('calendar', 'calendar:write'), forms = appState('forms', 'forms:read'), tasks = appState('tasks', 'tasks:read')
   const offHint = (s: ReturnType<typeof appState>) => (s.ok ? undefined : 'off')
-  const fromKind = page.table.settings.from_app ? kinds?.find(k => k.slug === page.table.settings.from_app) : undefined
+  // made from another app: kept in the settings, or (older tables) its "In Pocket …" column says which
+  const fromSlug = page.table.settings.from_app || page.fields.find(f => f.type === 'pocket' && f.options.single && kinds?.some(k => k.slug === f.options.app && f.name === `In ${k.app_name}`))?.options.app
+  const fromKind = fromSlug ? kinds?.find(k => k.slug === fromSlug && k.can_import) : undefined
   const more = (): MenuItem[] => [
     { label: 'About this table…', icon: 'info', onSelect: () => setTool('info') },
     { label: 'Bring rows from a spreadsheet…', icon: 'upload', onSelect: () => setTool('import') },
