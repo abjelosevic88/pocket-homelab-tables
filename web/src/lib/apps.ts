@@ -8,6 +8,7 @@ export const APP_INFO: Record<AppSlug, { name: string; icon: string; what: strin
   notes: { name: 'Pocket Notes', icon: 'note', what: 'notes' },
   forms: { name: 'Pocket Forms', icon: 'list', what: 'answers to forms' },
   files: { name: 'Pocket Files', icon: 'file', what: 'spreadsheet files' },
+  database: { name: 'Pocket Database', icon: 'database', what: 'your databases' },
   documents: { name: 'Pocket Documents', icon: 'archive', what: 'documents' },
   inventory: { name: 'Pocket Inventory', icon: 'package', what: 'things you own' },
   places: { name: 'Pocket Places', icon: 'pin', what: 'places' },

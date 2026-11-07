@@ -3,7 +3,7 @@ export interface APIToken { id: number; user_id: number; name: string; prefix: s
 
 export type ConnMode = 'core' | 'direct' | 'off'
 export type ConnVia = '' | 'core' | 'direct'
-export type AppSlug = 'contacts' | 'tasks' | 'calendar' | 'notes' | 'forms' | 'files' | 'documents' | 'inventory' | 'places' | 'crm' | 'bookshelf' | 'wishlist' | 'money'
+export type AppSlug = 'contacts' | 'tasks' | 'calendar' | 'notes' | 'forms' | 'files' | 'database' | 'documents' | 'inventory' | 'places' | 'crm' | 'bookshelf' | 'wishlist' | 'money'
 
 type ConnFields = { [K in AppSlug as `${K}_mode`]: ConnMode } & { [K in AppSlug as `${K}_via`]: ConnVia } & { [K in AppSlug as `${K}_detail` | `${K}_url` | `${K}_token` | `${K}_public_url` | `${K}_open_url`]: string } & { [K in AppSlug as `${K}_configured`]: boolean }
 
@@ -36,7 +36,8 @@ export interface Field { id: number; table_id: number; name: string; type: Field
 
 export interface CalendarSync { on: boolean; field: number; end_field?: number }
 export interface FormSync { on: boolean; form_id: string; title: string; url?: string; map: Record<string, number>; status?: string; at?: string; made?: number }
-export interface SheetSettings { calendar?: CalendarSync; form?: FormSync; task_done?: number; task_due?: number; from_app?: string }
+export interface DBSource { conn: number; conn_name: string; db?: string; schema?: string; table?: string; sql?: string; key?: string[]; at?: string }
+export interface SheetSettings { calendar?: CalendarSync; form?: FormSync; task_done?: number; task_due?: number; from_app?: string; db?: DBSource }
 
 export interface Table { id: number; base_id: number; name: string; icon: string; description: string; position: number; settings: SheetSettings; created_at: string; updated_at: string; records: number }
 export interface Base { id: number; name: string; icon: string; color: string; description: string; position: number; template: string; created_at: string; updated_at: string; tables: Table[] }

@@ -8,9 +8,10 @@ import { EMOJIS, typeInfo } from '../lib/fields'
 import type { Base, FieldType, SpecBase, Table, Template } from '../lib/types'
 import { fmtBytes } from '../lib/format'
 import { Icon } from './icons'
+import { Select } from './Select'
 import { Field, Loading, Modal, Spinner, Switch, errMsg, useToast } from './ui'
 
-export type NewHow = 'start' | 'blank' | 'template' | 'ai' | 'sheet' | 'apps' | 'files'
+export type NewHow = 'start' | 'blank' | 'template' | 'ai' | 'sheet' | 'apps' | 'files' | 'db'
 
 const WAYS: { how: NewHow; icon: string; title: string; sub: string }[] = [
   { how: 'blank', icon: 'plus', title: 'Blank', sub: 'One empty table to start from' },
@@ -19,6 +20,7 @@ const WAYS: { how: NewHow; icon: string; title: string; sub: string }[] = [
   { how: 'sheet', icon: 'upload', title: 'A spreadsheet', sub: 'Excel or Google Sheets as CSV, an Airtable export, a paste' },
   { how: 'apps', icon: 'layers', title: 'Your Pocket apps', sub: 'Contacts, places, books, things, deals, wishes, payments' },
   { how: 'files', icon: 'file', title: 'Pocket Files', sub: 'A spreadsheet file you keep there' },
+  { how: 'db', icon: 'database', title: 'A database', sub: 'A table or a query from Postgres, MySQL or SQLite, through Pocket Database' },
 ]
 
 export function NewBase({ how: how0, baseId, onClose }: { how: NewHow; baseId?: number; onClose: () => void }) {
@@ -49,6 +51,7 @@ export function NewBase({ how: how0, baseId, onClose }: { how: NewHow; baseId?: 
       {how === 'sheet' && <Sheet baseId={baseId} onDone={done} />}
       {how === 'apps' && <FromApps baseId={baseId} onDone={done} />}
       {how === 'files' && <FromFiles baseId={baseId} onDone={done} />}
+      {how === 'db' && <FromDB baseId={baseId} onDone={done} />}
     </Modal>
   )
 }
@@ -242,6 +245,54 @@ function FromFiles({ baseId, onDone }: { baseId?: number; onDone: Done }) {
         {data.entries.length === 0 && <li className="muted small pad-s">No folders or spreadsheets (CSV) here.</li>}
       </ul>
       {busy && <Loading label="Bringing it in…" />}
+    </div>
+  )
+}
+
+type DBConn = { id: number; name: string; engine: string; engine_name: string; database: string; group: string }
+type DBObject = { schema: string; name: string; kind: string; rows: number }
+
+function FromDB({ baseId, onDone }: { baseId?: number; onDone: Done }) {
+  const [conns, setConns] = useState<DBConn[] | null>(null)
+  const [off, setOff] = useState('')
+  const [conn, setConn] = useState('')
+  const [objs, setObjs] = useState<DBObject[] | null>(null)
+  const [mode, setMode] = useState<'table' | 'query'>('table')
+  const [pick, setPick] = useState('')
+  const [sql, setSql] = useState('')
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const { toast } = useToast()
+  useEffect(() => { api.get<{ connections: DBConn[]; off?: string }>(`${V1}/apps/db/connections`).then(r => { setConns(r.connections); setOff(r.off || '') }).catch(e => setOff(errMsg(e))) }, [])
+  useEffect(() => {
+    if (!conn) return
+    setObjs(null); setPick('')
+    api.get<{ objects: DBObject[] }>(`${V1}/apps/db/objects?conn=${conn}`).then(r => setObjs(r.objects)).catch(e => { setObjs([]); toast(errMsg(e), 'err') })
+  }, [conn]) // eslint-disable-line react-hooks/exhaustive-deps
+  const c = conns?.find(x => String(x.id) === conn)
+  const obj = objs?.find(o => `${o.schema}.${o.name}` === pick)
+  const go = async () => {
+    setBusy(true)
+    try {
+      const r = await api.post<{ table: Table; made: number; truncated?: boolean }>(`${V1}/from-db`, { conn: Number(conn), conn_name: c?.name || '', schema: mode === 'table' ? obj?.schema : '', table: mode === 'table' ? obj?.name : '', sql: mode === 'query' ? sql : '', name, base_id: baseId || 0 })
+      toast(`${r.made} rows brought in${r.truncated ? ' (the first 5,000)' : ''}`)
+      onDone(r.table.id)
+    } catch (e) { toast(errMsg(e), 'err') } finally { setBusy(false) }
+  }
+  if (off) return <div className="app-off"><span className="app-off-ico"><Icon name="database" size={15} /></span><div className="grow"><div className="app-off-h">Pocket Database is not connected for you</div><div className="muted small">{off}</div></div></div>
+  if (!conns) return <Loading />
+  if (!conns.length) return <p className="muted">Pocket Database has no connections for you yet: add your databases there first (its Discover page finds the ones on this box).</p>
+  return (
+    <div className="stack">
+      <p className="muted">Pocket Tables only reads: the database is never changed. The table keeps the columns and guesses their types; later, its ⋯ menu brings in the latest rows (matched by the primary key).</p>
+      <Field label="Database"><Select ariaLabel="Database" value={conn} onChange={setConn} placeholder="Pick a connection" options={conns.map(x => ({ value: String(x.id), label: x.name, hint: x.engine_name, group: x.group || undefined }))} /></Field>
+      {conn && <>
+        <div className="segmented"><button type="button" className={mode === 'table' ? 'active' : ''} onClick={() => setMode('table')}>A table</button><button type="button" className={mode === 'query' ? 'active' : ''} onClick={() => setMode('query')}>A query</button></div>
+        {mode === 'table' ? (objs === null ? <Loading /> : <Field label="Table or view"><Select ariaLabel="Table" value={pick} onChange={setPick} placeholder="Pick a table" options={objs.map(o => ({ value: `${o.schema}.${o.name}`, label: o.name, hint: `${o.kind}${o.rows >= 0 ? ` · ~${o.rows.toLocaleString()} rows` : ''}`, group: o.schema || undefined }))} /></Field>)
+          : <Field label="A read-only query" help="A SELECT; its columns become the fields."><textarea rows={5} className="mono" value={sql} onChange={e => setSql(e.target.value)} placeholder="SELECT name, city, created_at FROM customers WHERE active" /></Field>}
+        <Field label="Name of the table (optional)"><input value={name} onChange={e => setName(e.target.value)} placeholder={obj?.name || 'From the table’s name'} /></Field>
+        <div className="row end"><button type="button" className="btn primary" onClick={go} disabled={busy || (mode === 'table' ? !obj : !sql.trim())}>{busy && <Spinner />}Bring it in</button></div>
+      </>}
     </div>
   )
 }

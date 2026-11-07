@@ -62,13 +62,26 @@ type FormSync struct {
 	Made   int              `json:"made,omitempty"`
 }
 
+// DBSource is the database table or query (in Pocket Database) a table was made from.
+type DBSource struct {
+	Conn     int64    `json:"conn"`
+	ConnName string   `json:"conn_name"`
+	DB       string   `json:"db,omitempty"`
+	Schema   string   `json:"schema,omitempty"`
+	Table    string   `json:"table,omitempty"`
+	SQL      string   `json:"sql,omitempty"`
+	Key      []string `json:"key,omitempty"` // the columns that identify a row
+	At       string   `json:"at,omitempty"`  // last brought in
+}
+
 // SheetSettings are a table's ties to the other apps.
 type SheetSettings struct {
 	Calendar *CalendarSync `json:"calendar,omitempty"`
 	Form     *FormSync     `json:"form,omitempty"`
 	TaskDone int64         `json:"task_done,omitempty"` // a checkbox ticked when a task made from the row is done
 	TaskDue  int64         `json:"task_due,omitempty"`  // the date field a new task takes its due day from
-	FromApp  string        `json:"from_app,omitempty"`  // made from a list in another app (a kind: contact, place…): new ones can be brought in
+	FromApp  string        `json:"from_app,omitempty"`
+	DB       *DBSource     `json:"db,omitempty"` // made from a database: the latest rows can be brought in  // made from a list in another app (a kind: contact, place…): new ones can be brought in
 }
 
 // Sheet is one table.

@@ -186,6 +186,9 @@ export default function TablePage() {
     { label: 'Ask AI about this table…', icon: 'sparkles', onSelect: () => setTool('ask') },
     'sep',
     { heading: 'With your other apps' },
+    ...(page.table.settings.db ? [{ label: `Bring in the latest from ${page.table.settings.db.conn_name || 'the database'}`, icon: 'database', hint: appState('database', 'databases:query').ok ? undefined : 'off', disabled: !appState('database', 'databases:query').ok, onSelect: async () => {
+      try { const r = await api.post<{ made: number; updated: number }>(`${V1}/from-db`, { table_id: tid }); toast(r.made || r.updated ? `${r.made} new, ${r.updated} changed` : 'Nothing new in the database'); reloadAll(); announceChange() } catch (e) { toast(errMsg(e), 'err') }
+    } }] : []),
     ...(fromKind ? [{ label: `Bring in new ${fromKind.plural} from ${fromKind.app_name}`, icon: fromKind.icon, hint: fromKind.ok ? undefined : 'off', disabled: !fromKind.ok, onSelect: async () => {
       try { const r = await api.post<{ made: number; seen: number }>(`${V1}/from-app`, { kind: fromKind.slug, table_id: tid }); toast(r.made ? `${r.made} new ${r.made === 1 ? 'row' : 'rows'} from ${fromKind.app_name}` : `Nothing new in ${fromKind.app_name}`); reloadAll(); announceChange() } catch (e) { toast(errMsg(e), 'err') }
     } }] : []),

@@ -23,24 +23,26 @@ import (
 // needs and never kept, so a link switched off in Core applies at once.
 
 const (
-	scopeContactsRead  = "contacts:read"
-	scopeTasksRead     = "tasks:read"
-	scopeTasksWrite    = "tasks:write"
-	scopeCalendarRead  = "calendar:read"
-	scopeCalendarWrite = "calendar:write"
-	scopeNotesRead     = "notes:read"
-	scopeNotesWrite    = "notes:write"
-	scopeDocumentsRead = "documents:read"
-	scopeItemsRead     = "items:read"
-	scopePlacesRead    = "places:read"
-	scopeCRMRead       = "crm:read"
-	scopeBooksRead     = "books:read"
-	scopeWishesRead    = "wishes:read"
-	scopeMoneyRead     = "transactions:read"
-	scopeFormsRead     = "forms:read"
-	scopeFormsWrite    = "forms:write"
-	scopeFilesRead     = "files:read"
-	scopeFilesWrite    = "files:write"
+	scopeContactsRead   = "contacts:read"
+	scopeTasksRead      = "tasks:read"
+	scopeTasksWrite     = "tasks:write"
+	scopeCalendarRead   = "calendar:read"
+	scopeCalendarWrite  = "calendar:write"
+	scopeNotesRead      = "notes:read"
+	scopeNotesWrite     = "notes:write"
+	scopeDocumentsRead  = "documents:read"
+	scopeItemsRead      = "items:read"
+	scopePlacesRead     = "places:read"
+	scopeCRMRead        = "crm:read"
+	scopeBooksRead      = "books:read"
+	scopeWishesRead     = "wishes:read"
+	scopeMoneyRead      = "transactions:read"
+	scopeFormsRead      = "forms:read"
+	scopeFormsWrite     = "forms:write"
+	scopeFilesRead      = "files:read"
+	scopeFilesWrite     = "files:write"
+	scopeDatabasesRead  = "databases:read"
+	scopeDatabasesQuery = "databases:query"
 )
 
 // pocketApp is one sibling Pocket app a table can reach.
@@ -64,7 +66,8 @@ var (
 	appMoney     = pocketApp{"money", "Pocket Money", []string{scopeMoneyRead}, "Point a row at a payment (what a thing cost), and make a table from your payments"}
 	appForms     = pocketApp{"forms", "Pocket Forms", []string{scopeFormsRead, scopeFormsWrite}, "Turn the answers to a form into rows by themselves, and make a form from a table's fields"}
 	appFiles     = pocketApp{"files", "Pocket Files", []string{scopeFilesRead, scopeFilesWrite}, "Save a table as a spreadsheet file in your files, and bring a spreadsheet from your files in as a table"}
-	pocketApps   = []pocketApp{appContacts, appTasks, appCalendar, appNotes, appForms, appFiles, appDocuments, appInventory, appPlaces, appCRM, appBooks, appWishlist, appMoney}
+	appDatabase  = pocketApp{"database", "Pocket Database", []string{scopeDatabasesRead, scopeDatabasesQuery}, "Make a table from a table or a read-only query in one of your databases (Postgres, MySQL, SQLite), and bring in the latest rows when you want; it never changes the database"}
+	pocketApps   = []pocketApp{appContacts, appTasks, appCalendar, appNotes, appForms, appFiles, appDatabase, appDocuments, appInventory, appPlaces, appCRM, appBooks, appWishlist, appMoney}
 )
 
 func appBySlug(slug string) (pocketApp, bool) {

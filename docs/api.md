@@ -85,6 +85,8 @@ dates may be `today`, `tomorrow`, `yesterday`, `+7`, `-30`; `within` takes `past
 | `GET /apps/files`, `POST /bases/{id}/from-files` | browse Pocket Files; `{space, path}` makes a table from a CSV there |
 | `GET /apps/forms`, `POST /tables/{id}/form`, `POST /tables/{id}/form/pull` | tie a Pocket Forms form: `{on, form_id, title, map: {question id: field id}, make_fields?, questions?}` — answers become rows |
 | `POST /tables/{id}/make-form` | a draft form in Pocket Forms from the table's fields, tied to the table |
+| `GET /apps/db/connections`, `GET /apps/db/objects?conn=&db=` | your Pocket Database connections and their tables |
+| `POST /from-db` | `{conn, conn_name, db?, schema?, table? \| sql?, name?, base_id?}` — a table from a database table or a read-only query; `{table_id}` brings in the latest rows (matched by primary key, else by content) |
 | `POST /tables/{id}/calendar/sync` | bring the table's events in Pocket Calendar up to date now |
 
 ## AI

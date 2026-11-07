@@ -43,7 +43,7 @@
 - **Bases and tables** you shape yourself: 22 field types — text, long text, number, money, percent, rating, yes/no, date (with a time, with a reminder), choice and several choices (coloured), email, phone, web link, files, **links between tables** (both sides kept), **look-ups** and **totals** of the linked rows, **formulas** (`{Price} * {Quantity}`, `IF`, `DAYS`, `DATEADD`, `CONCAT` and 50 more), row numbers, added and changed times.
 - **Four ways to look**: a grid (a real spreadsheet: arrows, Enter, typing, copy, and **paste a block from Excel** — new rows are added), a board, a calendar and a gallery. Each view keeps its own filters (all/any), sorts, groups, hidden and ordered fields, column widths, row height and totals under the columns.
 - **A row** opens as a sheet: every field, comments, every change (who, what, before and after), and its tasks, events and notes in your other apps. Deleted rows wait 30 days in the bin.
-- **Start any way**: blank, eight ready-made bases (projects, equipment bookings, supplier comparison, research, content calendar, event, a collection, job applications), a spreadsheet (CSV/TSV from Excel, Google Sheets, Numbers or **Airtable** — field types are guessed), a list from your other Pocket apps, a file in Pocket Files, or **describe it and AI sets it up** (you see it before anything is made).
+- **Start any way**: blank, eight ready-made bases (projects, equipment bookings, supplier comparison, research, content calendar, event, a collection, job applications), a spreadsheet (CSV/TSV from Excel, Google Sheets, Numbers or **Airtable** — field types are guessed), a list from your other Pocket apps, a file in Pocket Files, a table or query in one of your databases, or **describe it and AI sets it up** (you see it before anything is made).
 - **AI** (optional, only when you ask): design tables, **fill a column** for many rows at once (sort into options, sum up, guess), and **ask a question** about a table.
 - **Reminders**: date fields with “remind me” show on Home and in a morning message (Apprise, ntfy or a webhook).
 - **Everyone their own** on one box; admins see no one else's tables. Export everything as JSON (and back), each table as CSV.
@@ -69,6 +69,7 @@ Set `CORE_URL` and `CORE_REGISTRATION_KEY` and Tables joins the box: people sign
 | Pocket Forms | tie a form to a table: each answer becomes a row by itself; make a form from a table's fields | `forms:read`, `forms:write` |
 | Pocket Notes | save a row or a whole table as a note; point a row at a note | `notes:read`, `notes:write` |
 | Pocket Files | save a table as a spreadsheet; make a table from a spreadsheet there | `files:read`, `files:write` |
+| Pocket Database | make a table from a table or a read-only query in your Postgres, MySQL or SQLite databases; bring in the latest rows (matched by the primary key) — the database is never changed | `databases:read`, `databases:query` |
 | Pocket Contacts, Inventory, Places, CRM, Bookshelf, Wishlist, Money | point a row at a person, a thing, a place, a deal, a book, a wish or a payment; make a table from them | `contacts:read`, `items:read`, `places:read`, `crm:read`, `books:read`, `wishes:read`, `transactions:read` |
 | Pocket Documents | point a row at a scanned document | `documents:read` |
 
