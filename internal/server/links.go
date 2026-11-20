@@ -21,6 +21,18 @@ var linkOffers = []core.Offer{
 	{Scope: "tables:write", Name: "Add rows to your tables", Description: "Add a row to one of your tables (an answer to a form, a step of an automation) and comment on a row. It may change only the rows that app added itself."},
 }
 
+// portable is what Pocket Move may copy out and bring in for a person
+// (docs/move.md in pocket-homelab-core); Register adds move:export/import.
+var portable = &core.Portable{
+	Exports: []core.PortableExport{
+		{Path: "/api/v1/export.json", File: "tables.json", Kind: core.KindPocket, Title: "Every base with its tables, fields, views, rows and links"},
+	},
+	Imports: []core.PortableImport{
+		{Path: "/api/v1/import", Kind: core.KindPocket, Form: "file", Title: "Adds the bases from another box as new bases; bases already here are skipped"},
+		{Path: "/api/v1/import", Kind: core.KindCSV, Form: "file", Title: "Makes a new base from a spreadsheet (CSV or TSV, the first row names the columns, types are guessed); the same file twice makes one base"},
+	},
+}
+
 type linkRoute struct {
 	methods string
 	path    *regexp.Regexp
@@ -41,6 +53,9 @@ var errLinkScope = errors.New("outside the link's scope")
 
 // linkAllows reports whether a link token with these scopes may make this request.
 func linkAllows(scopes []string, r *http.Request) bool {
+	if portable.LinkAllows(scopes, r) {
+		return true
+	}
 	for _, lr := range linkRoutes {
 		if !strings.Contains(" "+lr.methods+" ", " "+r.Method+" ") || !lr.path.MatchString(r.URL.Path) {
 			continue

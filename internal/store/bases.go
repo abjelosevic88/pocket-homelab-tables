@@ -384,3 +384,21 @@ func (s *Store) DeleteView(ctx context.Context, uid, id int64) error {
 	res, err := s.DB.ExecContext(ctx, `DELETE FROM views WHERE user_id = ? AND id = ?`, uid, id)
 	return affected(res, err)
 }
+
+// BaseByImportRef is the person's base brought in from ref before, or nil.
+func (s *Store) BaseByImportRef(ctx context.Context, uid int64, ref string) *Base {
+	if ref == "" {
+		return nil
+	}
+	b, err := scanBase(s.DB.QueryRowContext(ctx, `SELECT `+baseCols+` FROM bases WHERE user_id = ? AND import_ref = ? ORDER BY id LIMIT 1`, uid, ref))
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// SetBaseImportRef notes where a base was brought in from.
+func (s *Store) SetBaseImportRef(ctx context.Context, uid, id int64, ref string) error {
+	_, err := s.DB.ExecContext(ctx, `UPDATE bases SET import_ref = ? WHERE user_id = ? AND id = ?`, ref, uid, id)
+	return err
+}

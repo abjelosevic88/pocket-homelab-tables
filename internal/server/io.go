@@ -3,7 +3,9 @@ package server
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/csv"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -459,7 +461,7 @@ func (s *Server) handleExportJSON(w http.ResponseWriter, r *http.Request) {
 // importDoc brings back an export as new bases (ids are new; links,
 // lookups, views and values are mapped to them).
 func (s *Server) importDoc(ctx context.Context, uid int64, doc exportDoc) (map[string]int, error) {
-	counts := map[string]int{"bases": 0, "tables": 0, "records": 0}
+	counts := map[string]int{"bases": 0, "tables": 0, "records": 0, "already": 0}
 	sheetMap, fieldMap, recMap := map[int64]int64{}, map[int64]int64{}, map[int64]int64{}
 	type pend struct {
 		f   *tables.Field
@@ -471,9 +473,19 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc exportDoc) (map[s
 		if eb.Base == nil {
 			continue
 		}
+		// a base brought in before, or the person's own (their file back on
+		// the same box), is left alone
+		ref := fmt.Sprintf("pocket:%d:%s", eb.Base.ID, eb.Base.CreatedAt)
+		if have, err := s.store.GetBase(ctx, uid, eb.Base.ID); (err == nil && have.CreatedAt == eb.Base.CreatedAt) || s.store.BaseByImportRef(ctx, uid, ref) != nil {
+			counts["already"]++
+			continue
+		}
 		b := &store.Base{UserID: uid, Name: clip(firstNonEmpty(eb.Base.Name, "Imported"), 100), Icon: eb.Base.Icon, Color: eb.Base.Color, Description: eb.Base.Description}
 		if err := s.store.CreateBase(ctx, b); err != nil {
 			return counts, err
+		}
+		if eb.Base.ID > 0 && eb.Base.CreatedAt != "" {
+			_ = s.store.SetBaseImportRef(ctx, uid, b.ID, ref)
 		}
 		counts["bases"]++
 		for _, et := range eb.Tables {
@@ -520,6 +532,9 @@ func (s *Server) importDoc(ctx context.Context, uid int64, doc exportDoc) (map[s
 				continue
 			}
 			sid := sheetMap[et.Table.ID]
+			if sid == 0 {
+				continue // its base was here already
+			}
 			for _, er := range et.Records {
 				data := map[string]any{}
 				for k, v := range er.Data {
@@ -624,6 +639,17 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 		s.userFail(w, err, "import")
 		return
 	}
+	// the same spreadsheet again: the base it made is still here
+	sum := sha256.Sum256(trim)
+	ref := "sheet:" + hex.EncodeToString(sum[:12])
+	if have := s.store.BaseByImportRef(ctx, uid, ref); have != nil {
+		out := map[string]any{"bases": 0, "tables": 0, "records": 0, "already": 1}
+		if ts, _ := s.store.ListSheets(ctx, uid, have.ID); len(ts) > 0 {
+			out["table"] = ts[0]
+		}
+		writeJSON(w, http.StatusOK, out)
+		return
+	}
 	b := &store.Base{UserID: uid, Name: clip(firstNonEmpty(name, "Imported"), 100), Icon: "📥", Color: BaseColors[0]}
 	if err := s.store.CreateBase(ctx, b); err != nil {
 		s.fail(w, err, "import")
@@ -634,5 +660,6 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 		s.userFail(w, err, "import")
 		return
 	}
+	_ = s.store.SetBaseImportRef(ctx, uid, b.ID, ref)
 	writeJSON(w, http.StatusOK, map[string]any{"bases": 1, "tables": 1, "records": n, "table": t})
 }

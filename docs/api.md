@@ -58,10 +58,11 @@ dates may be `today`, `tomorrow`, `yesterday`, `+7`, `-30`; `within` takes `past
 | `DELETE /records/{id}`, `POST /records/{id}/restore`, `DELETE /records/{id}/purge`, `POST /records/{id}/duplicate` | |
 | `POST /records/{id}/comments`, `DELETE /comments/{id}` | `{text}` |
 | `POST /files` (multipart `file`), `GET /files/{id}` | attached files (`?dl=1` downloads) |
-| `POST /import` | a Pocket Tables export (JSON) or a spreadsheet (CSV/TSV, multipart `file` or `{text, name}`) → a new base |
+| `POST /import` | a Pocket Tables export (JSON) or a spreadsheet (CSV/TSV, multipart `file` or `{text, name}`) → a new base; a base already here (or the same spreadsheet again) is skipped, so the same file twice adds nothing |
 | `POST /bases/{id}/import` | a spreadsheet → a new table in the base (types guessed) |
 | `POST /tables/{id}/import` | `?add_fields=1` — a spreadsheet's rows into the table, columns by field name |
 | `GET /export.json` | everything (bases, tables, fields, views, rows, links) |
+| `GET /pocket/portable` | what Pocket Move can copy out (`/export.json`) and bring in (`/import`: an export or a spreadsheet), for `move:export` / `move:import` links |
 
 ## Across everything
 
