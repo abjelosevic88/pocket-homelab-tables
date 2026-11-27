@@ -242,12 +242,13 @@ func (s *Server) registerWithCore(ctx context.Context) error {
 	m := core.Manifest{
 		Slug: "tables", Name: "Pocket Tables",
 		Description: "Your own small databases, without code: tables with typed fields (choices, dates, money, files, links between tables, lookups and formulas), seen as a grid, a board, a calendar or a gallery, with filters and sorts. A row can point at a contact, task, event, note, document, place, deal, book, wish or payment in the other Pocket apps; a table keeps its dates in Pocket Calendar, makes tasks in Pocket Tasks, turns the answers to a Pocket Forms form into rows, and saves itself to Pocket Notes or Pocket Files. Replaces Airtable; works on its own too, and Pocket AI designs tables and fills columns.",
-		Icon:        "/favicon.svg", Version: Version,
+		Icon:        "/favicon.svg", Category: "Work", Version: Version,
 		URL: s.cfg.CoreAppURL, PublicURL: s.cfg.BaseURL, HealthPath: "/healthz", EnvPrefix: "TABLES",
-		Publishes: eventTopics,
-		Offers:    linkOffers,
-		Portable:  portable,
-		Uses:      append(linkUses(), core.InferenceUse()),
+		Publishes:    eventTopics,
+		Offers:       linkOffers,
+		Portable:     portable,
+		Capabilities: capabilities,
+		Uses:         append(linkUses(), core.InferenceUse()),
 	}
 	if s.cfg.BaseURL != "" {
 		m.OIDC = &core.OIDCRequest{RedirectURIs: []string{s.oidcCallbackURL()}}

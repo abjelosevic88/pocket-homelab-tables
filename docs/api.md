@@ -74,6 +74,18 @@ dates may be `today`, `tomorrow`, `yesterday`, `+7`, `-30`; `within` takes `past
 | `GET /lookup` | `?email=` / `?contact=<Contacts id>` / `?name=` → the rows about a person |
 | `GET /day/{YYYY-MM-DD}` | the rows with a date on that day |
 
+## Pocket Search, Pocket Day and Pocket Hub
+
+Tables answers the routes every Pocket app can offer (`docs/capabilities.md` in Pocket Core), so Pocket Search, Pocket Day and Pocket Hub find it on their own. Each has its own link scope that opens that one route and nothing else; a signed-in person or a personal token can call them too. Addresses (`url`) are paths in the app. They only read.
+
+| Route | Scope | What |
+|---|---|---|
+| `GET /pocket/search?q&limit` | `pocket:search` | `{items}`: what `/search` finds, as one list: the tables with the words in their name first, then the rows named by them, then the rows that have them in another field. A table has `id` `table:<id>`, `kind` `table`, `snippet` "In CRM · 12 rows", `url` `/t/<id>`; a row has `id` `row:<id>`, `kind` `row`, `title` (its first field, or "Row 7"), `snippet` — its table and base, the field the words were found in, then its first few values ("Clients in CRM · Email: ana@pekara.ba · City: Sarajevo"; empty values, files and the row's own times and numbers are left out, long text is cut) — and `url` `/r/<id>`. `date` is when it last changed. Words without a letter or a digit find nothing |
+| `GET /pocket/day/{date}[?tz=]` | `pocket:day` | `{date, summary, items}`: the rows added that day (`kind` `added`), the rows changed that day (`changed`) and the rows with a date on it, as `/day` gives them (`dated`). A row comes once: added before changed, changed before dated. An item has `id` `row:<id>`, `title`, `sub` (its table; for a dated row also the date field: "Trips · Leave"), `time` (when it was added or changed, or the time of the date when it has one) and `url`. `summary` reads "5 rows added in Books and Clients; 1 row changed in Orders; 1 row with this date in Trips". "Changed" is the row's last change, so a row changed again later counts for the later day only |
+| `GET /pocket/widget` | `pocket:widget` | `{line, items, url}`: the five tables touched last, each with `detail` "3 rows added or changed in the last week" (else "12 rows" or "No rows yet"). `line` is "4 rows added or changed today", or empty on a quiet day |
+
+There is no `/pocket/capture`: a row belongs to a table and its fields have types, so a quick line has nowhere to go on its own.
+
 ## The other Pocket apps
 
 | | |
@@ -98,5 +110,5 @@ dates may be `today`, `tomorrow`, `yesterday`, `+7`, `-30`; `within` takes `past
 ## Other apps (Pocket Core links)
 
 Offers `tables:read` (bases, tables, rows, search, lookup, day, summary, CSV) and `tables:write` (add rows, change the rows that
-app added, comment). Events: `tables.record_created`, `tables.record_updated`, `tables.record_deleted`, `tables.reminder` —
+app added, comment). Also `pocket:search`, `pocket:day` and `pocket:widget`, one route each (above). Events: `tables.record_created`, `tables.record_updated`, `tables.record_deleted`, `tables.reminder` —
 each with `table_id`, `table`, `base`, `record_id`, `title`, `values` (text by field name) and `url`.

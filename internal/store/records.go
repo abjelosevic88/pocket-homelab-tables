@@ -140,6 +140,38 @@ func (s *Store) PurgeDeleted(ctx context.Context, older time.Duration) ([]string
 	return s.orphanFiles(ctx)
 }
 
+// SheetChange is how many of a table's rows were added or changed lately.
+type SheetChange struct {
+	SheetID int64
+	Rows    int    // since the first moment
+	Today   int    // of those, since the second
+	Last    string // when the newest of them changed
+}
+
+// stamp writes a moment the way it compares right with the stored times,
+// whatever their fraction of a second: without one, and without the Z.
+func stamp(t time.Time) string { return t.UTC().Format("2006-01-02T15:04:05") }
+
+// ChangedSince counts, per table, a person's rows added or changed since a
+// moment (and, of those, since a later one). It reads only those rows.
+func (s *Store) ChangedSince(ctx context.Context, uid int64, since, today time.Time) ([]SheetChange, error) {
+	rows, err := s.DB.QueryContext(ctx, `SELECT sheet_id, COUNT(1), COALESCE(SUM(updated_at >= ?), 0), MAX(updated_at) FROM records
+		WHERE user_id = ? AND deleted_at IS NULL AND updated_at >= ? GROUP BY sheet_id`, stamp(today), uid, stamp(since))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []SheetChange{}
+	for rows.Next() {
+		var c SheetChange
+		if err := rows.Scan(&c.SheetID, &c.Rows, &c.Today, &c.Last); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
 // ---- links ----
 
 // Links lists the stored links of these link fields.

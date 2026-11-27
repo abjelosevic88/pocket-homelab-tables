@@ -122,6 +122,47 @@ func (s *Server) handleSummary(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"bases": len(bm), "tables": len(all), "rows": rows, "due_today": today, "soon": soon, "late": late, "recent": recent})
 }
 
+// rowMatch is a row with the words in one of its fields.
+type rowMatch struct {
+	ld    *loaded
+	rec   *tables.Record
+	field *tables.Field // the first field that has the words
+	text  string        // that field as text
+	at    int           // where the words start in it
+}
+
+// find looks through every table of a person: the rows with the words in
+// any field (at most limit of them) and the tables with the words in their name.
+func (s *Server) find(ctx context.Context, uid int64, q string, limit int) ([]rowMatch, []*loaded, map[int64]*store.Base, error) {
+	all, bm, _, err := s.everything(ctx, uid)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	lq := strings.ToLower(q)
+	var rows []rowMatch
+	var named []*loaded
+	for _, ld := range all {
+		if strings.Contains(strings.ToLower(ld.sheet.Name), lq) {
+			named = append(named, ld)
+		}
+		for _, x := range ld.eng.Records {
+			if len(rows) >= limit {
+				break
+			}
+			for _, f := range ld.fields {
+				t := ld.eng.Text(x, f)
+				i := strings.Index(strings.ToLower(t), lq)
+				if i < 0 {
+					continue
+				}
+				rows = append(rows, rowMatch{ld: ld, rec: x, field: f, text: t, at: i})
+				break
+			}
+		}
+	}
+	return rows, named, bm, nil
+}
+
 // handleSearch finds rows with the words in any field, and tables by name.
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -136,37 +177,23 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, out)
 		return
 	}
-	all, bm, _, err := s.everything(ctx, uid)
+	rows, named, bm, err := s.find(ctx, uid, q, limit)
 	if err != nil {
 		s.fail(w, err, "search")
 		return
 	}
-	lq := strings.ToLower(q)
 	items := []hit{}
 	tbls := []map[string]any{}
-	for _, ld := range all {
-		if strings.Contains(strings.ToLower(ld.sheet.Name), lq) {
-			b := bm[ld.sheet.BaseID]
-			tbls = append(tbls, map[string]any{"id": ld.sheet.ID, "name": ld.sheet.Name, "icon": ld.sheet.Icon, "base": b.Name, "rows": len(ld.eng.Records), "url": s.tableLink(ld.sheet.ID)})
+	for _, ld := range named {
+		b := bm[ld.sheet.BaseID]
+		tbls = append(tbls, map[string]any{"id": ld.sheet.ID, "name": ld.sheet.Name, "icon": ld.sheet.Icon, "base": b.Name, "rows": len(ld.eng.Records), "url": s.tableLink(ld.sheet.ID)})
+	}
+	for _, m := range rows {
+		h := s.hitOf(m.ld, bm, m.rec)
+		if !m.field.Primary {
+			h.Field, h.Snippet = m.field.Name, snippet(m.text, m.at, len(q))
 		}
-		for _, x := range ld.eng.Records {
-			if len(items) >= limit {
-				break
-			}
-			for _, f := range ld.fields {
-				t := ld.eng.Text(x, f)
-				i := strings.Index(strings.ToLower(t), lq)
-				if i < 0 {
-					continue
-				}
-				h := s.hitOf(ld, bm, x)
-				if !f.Primary {
-					h.Field, h.Snippet = f.Name, snippet(t, i, len(q))
-				}
-				items = append(items, h)
-				break
-			}
-		}
+		items = append(items, h)
 	}
 	out["items"], out["tables"] = items, tbls
 	writeJSON(w, http.StatusOK, out)

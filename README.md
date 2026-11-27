@@ -75,6 +75,8 @@ Set `CORE_URL` and `CORE_REGISTRATION_KEY` and Tables joins the box: people sign
 
 **Nothing depends on another app.** Each app's state is checked per person — connected, switched off here, switched off in Pocket Core, not on this box, too old — and what needs it is shown greyed out with one line saying why and what to do, never hidden.
 
+Pocket Search and Pocket Hub find Tables on their own, with nothing to set up in either: your tables and rows turn up in Search (`!tables ana`), each row with its table and its first values, and Hub shows a "Tables" widget with the tables you touched last and how many of their rows were added or changed in the last week. The day in your tables is offered the same way: the rows you added or changed that day and the rows with a date on it (Pocket Day keeps its own reading through `tables:read` for now, the rows with a date). There is no quick line from Hub: a row belongs to a table with its own fields. The routes are in [docs/api.md](docs/api.md#pocket-search-pocket-day-and-pocket-hub).
+
 Other apps use your tables through `tables:read` and `tables:write`: Pocket Search finds rows, Pocket Day shows the rows with a date on the day, Pocket AI answers questions about your tables and adds rows, and Pocket Flows can add a row as a step. Events on the bus — `tables.record_created`, `tables.record_updated`, `tables.record_deleted`, `tables.reminder` — start flows in Pocket Flows. Without Core every connection can be made directly with a URL and a token; the Core-only choices stay visible, greyed out.
 
 ## Develop

@@ -33,6 +33,15 @@ var portable = &core.Portable{
 	},
 }
 
+// capabilities is what Tables lets Pocket Search, Pocket Day and Pocket Hub
+// do (docs/capabilities.md in pocket-homelab-core); Register adds the
+// pocket:* offers, capabilities.go answers the routes.
+var capabilities = core.Capabilities{
+	Search: &core.Searchable{What: "Your tables by name, and their rows by anything written in them", Kinds: []string{"table", "row"}, Bangs: []string{"tables", "table"}},
+	Day:    &core.DayFeed{Label: "Tables", One: "row", Many: "rows", What: "The rows you added or changed that day, and the rows with a date on it"},
+	Widget: &core.Widget{Title: "Tables", What: "The tables you touched last, and how many of their rows were added or changed in the last week"},
+}
+
 type linkRoute struct {
 	methods string
 	path    *regexp.Regexp
@@ -53,7 +62,7 @@ var errLinkScope = errors.New("outside the link's scope")
 
 // linkAllows reports whether a link token with these scopes may make this request.
 func linkAllows(scopes []string, r *http.Request) bool {
-	if portable.LinkAllows(scopes, r) {
+	if portable.LinkAllows(scopes, r) || capabilities.LinkAllows(scopes, r) {
 		return true
 	}
 	for _, lr := range linkRoutes {

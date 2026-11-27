@@ -133,6 +133,11 @@ func (s *Server) Router() http.Handler {
 				r.Get("/lookup", s.handleLookup)
 				r.Get("/day/{date}", s.handleDay)
 
+				// what every Pocket app answers the same way (capabilities.go)
+				r.Get("/pocket/search", core.SearchHandler(s.pocketSearch))
+				r.Get("/pocket/day/{date}", core.DayHandler(s.pocketDay))
+				r.Get("/pocket/widget", core.WidgetHandler(s.pocketWidget))
+
 				// AI
 				r.Get("/ai/status", s.handleAIStatus)
 				r.Get("/ai/models", s.handleAIModels)
