@@ -200,6 +200,8 @@ func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func snippet(t string, i, n int) string {
+	// i was found in the lowercase text, which can be longer in bytes than t ("Ⱥ"): keep it inside t
+	i = min(max(i, 0), len(t))
 	start := max(0, i-40)
 	end := min(len(t), i+n+60)
 	for start > 0 && !utf8Start(t[start]) {

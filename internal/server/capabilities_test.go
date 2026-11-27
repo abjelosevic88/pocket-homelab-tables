@@ -507,3 +507,15 @@ func TestManifestCapabilities(t *testing.T) {
 		t.Errorf("a quick line is offered, but there is nowhere to keep one")
 	}
 }
+
+// A match found in the lowercase text can sit past the end of the value itself.
+func TestSnippetStaysInsideTheText(t *testing.T) {
+	text := strings.Repeat("Ⱥ", 100) + " needle"
+	low := strings.ToLower(text)
+	if got := snippet(text, strings.Index(low, "needle"), len("needle")); got == "" {
+		t.Fatal("empty snippet")
+	}
+	if got := snippet("short", 400, 6); got != "short" {
+		t.Fatalf("out of range: %q", got)
+	}
+}
